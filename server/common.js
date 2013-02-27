@@ -27,14 +27,26 @@
  */
 
 // Require the configuration file
-var config = require(__dirname + "/config.json");
+//var config = require(__dirname + "/config.json");
+//var config = require(__dirname + "/config.json");
 
 var fs = require('fs');
+var data = fs.readFileSync('./config.json'), config;
+
+try {
+  config = JSON.parse(data);
+  console.dir(config);
+}
+catch (err) {
+  console.log('There has been an error parsing your JSON.')
+  console.log(err);
+}
+
+
 var Db = require('mongodb').Db;
 var MongoServer = require('mongodb').Server;
 var mongo = new Db(config.mongo.db, new MongoServer(config.mongo.host, config.mongo.port, {strict:true, auto_reconnect:true}), {w: 1});
 	
-
 
 
 module.exports = {
