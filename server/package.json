@@ -1,0 +1,15 @@
+{
+  "author": "",
+  "name": "godseyes",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/lmccart/godseyes.git"
+  },
+  "dependencies": {
+    "mongodb": "1.2.13"
+  },
+  "engines": {
+    "node": "*"
+  }
+}
