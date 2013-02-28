@@ -1,7 +1,12 @@
 {
-  "author": "",
   "name": "godseyes",
-  "version": "0.0.0-1",
+  "scripts": {
+    "start": "index.js"
+  },
+  "version": "0.0.0-14",
+  "engines": {
+    "node": "0.8.x"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/lmccart/godseyes.git"
@@ -9,11 +14,5 @@
   "dependencies": {
     "mongodb": "1.2.13"
   },
-  "engines": {
-    "node": "*"
-  },
-  "subdomain": "godseyes",
-  "scripts": {
-    "start": "index.js"
-  }
+  "subdomain": "godseyes"
 }
