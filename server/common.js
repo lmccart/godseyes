@@ -31,17 +31,24 @@
 var config = require(__dirname + "/config.json");
 var fs = require('fs');
 
+// Config opentok
+var OpenTok = require('opentok');
+var opentok = new OpenTok.OpenTokSDK(config.opentok.key, config.opentok.secret);
 
+// Config mongo
 var Db = require('mongodb').Db;
 var MongoServer = require('mongodb').Server;
 var mongo = new Db(config.mongo.db, new MongoServer(config.mongo.host, config.mongo.port, {strict:true, auto_reconnect:true}), {w: 1});
 	
+	
+// Exports
 module.exports = {
 	url : require('url'),
 	net : require('net'),
 	fs : fs,
-	
-	mongo : mongo
+	config : config,
+	mongo : mongo,
+	opentok : opentok
  	
 };
 

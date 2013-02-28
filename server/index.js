@@ -5,46 +5,43 @@
  *
  */
 
-// requires node's http module
 var http = require('http');
-
-
-
 var common = require('./common.js');
+var router = require('./router.js');
 
 
-function start() {
+function start(route) {
 
-
-// creates a new httpServer instance
-http.createServer(function (req, res) {
-  // this is the callback, or request handler for the httpServer
-
-  // respond to the browser, write some headers so the 
-  // browser knows what type of content we are sending
-  res.writeHead(200, {'Content-Type': 'text/html'});
-
-  // write some content to the browser that your user will see
-  res.write('<h1>hello, i know nodejitsu.</h1>');
-
-  // close the response
-  res.end();
-  
-  	/*common.mongo.open(function(err, p_client) {
+	// open mongo connect
+  common.mongo.open(function(err, p_client) {
+		console.log("mongo open");
+	});
 	
-		common.initialized = true;
-		
-		//console.log("mongo open");
-
-		
-	});*/
-
-  
-}).listen(8080); // the server will listen on port 8080
-
+	// create opentok sessions
+	var location = common.config.ip; // use an IP or 'localhost'
+	common.opentok.createSession(location, function(result){
+	  common.otSessionId = result;
+	  // Do things with sessionId
+	});
+	
+	// routing fxn
+	function onRequest(req, res) {
+    var pathname = common.url.parse(req.url).pathname;
+    console.log("Request for " + pathname + " received.");
+    
+    route(pathname);
+    
+	  res.writeHead(200, {'Content-Type': 'text/html'});
+	  res.write('<h1>hello, i know nodejitsu.'+pathname+'</h1>');
+	  res.end();
+	}
+	
+	// creates a new httpServer instance
+	http.createServer(onRequest).listen(8080); // the server will listen on port 8080
+	
 };
 
 
-// do the damn thing
-start();
+// do that thang
+start(router.route);
 
