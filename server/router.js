@@ -7,30 +7,34 @@ function route(url, res) {
   
   if (pathname === "/authenticate_user") {
   	var did = common.qs.parse(url)["deviceid"];
-  	var desc = common.qs.parse(url)["desc"];
   	var p2p = common.qs.parse(url)["p2p"];
   	var force = common.qs.parse(url)["force"];
   	
   	//console.log("did:"+did+" p2p:"+p2p+" force:"+force);	
-  	authenticateUser(did, desc, p2p, force, res);
+  	authenticateUser(did, p2p, force, res);
   	
   } else if (pathname === "/user_session_started") {
   	var did = common.qs.parse(url)["deviceid"];
-	  setUserStreaming(did, true);
+  	var desc = common.qs.parse(url)["desc"];
+	  setUserStreaming(did, true, desc, res);
   } else if (pathname === "/user_session_ended") {
   	var did = common.qs.parse(url)["deviceid"];
-	  setUserStreaming(did, false);
+	  setUserStreaming(did, false, "", res);
   }
   
   else if (pathname === "/get_current_sessions") {
   	var streaming = common.qs.parse(url)["streaming"];
 	  getCurrentSessions(streaming, res);
   }
+  else if (pathname === "/get_current_sessions_web") {
+  	var streaming = common.qs.parse(url)["streaming"];
+	  getCurrentSessionsWeb(streaming, res);
+  }
 }
 
 //common.otSessionId
 
-function authenticateUser(did, desc, p2p, force, res) {
+function authenticateUser(did, p2p, force, res) {
 	
 	// if force flag, reset session automatically
 	
@@ -42,7 +46,7 @@ function authenticateUser(did, desc, p2p, force, res) {
 	if (force) { // force create new session
 		newSession(p2pString, function(sessID) { 
 			var tok = newToken(sessID); 
-			updateUser(did, desc, sessID, tok, false, res);
+			updateUser(did, sessID, tok, false, res);
 		});
 	} else {
 
@@ -51,11 +55,11 @@ function authenticateUser(did, desc, p2p, force, res) {
 			c.findOne({'did':did}, function(err, doc) {
 				if (doc) { 
 						var tok = newToken(doc.sessionID);
-						updateUser(did, desc, doc.sessionID, tok, false, res);
+						updateUser(did, doc.sessionID, tok, false, res);
 				} else {  // create new id
 					newSession(p2pString, function(sessID) {
 						var tok = newToken(sessID);
-						updateUser(did, desc, sessID, tok, false, res);
+						updateUser(did, sessID, tok, false, res);
 					});
 				}
 			});
@@ -82,11 +86,11 @@ var newToken = function(sessID) {
 }
 
 
-function updateUser(did, desc, sessID, tok, stream, res) {
+function updateUser(did, sessID, tok, stream, res) {
 	common.mongo.collection('users', function(e, c) {
 		// upsert user with tok + id
 		c.update({did: did},
-			{$set: {desc: desc, sessionID: sessID, token: tok, streaming: stream }}, 
+			{$set: {sessionID: sessID, token: tok, streaming: stream }}, 
 			{upsert:true},
 			function(err) {
         if (err) console.warn("MONGO ERROR "+err.message);
@@ -94,20 +98,26 @@ function updateUser(did, desc, sessID, tok, stream, res) {
         
         // return json with tok + sessID
         res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ did:did, desc:desc, token:tok, sessionID:sessID, streaming: stream}));
+        res.write(JSON.stringify({ did:did, token:tok, sessionID:sessID, streaming: stream}));
         res.end();
     });
 	});
 }
 
-function setUserStreaming(did, streaming) {
+function setUserStreaming(did, streaming, desc, res) {
 	common.mongo.collection('users', function(e, c) {
 		// upsert user with tok + id
 		c.update({did: did},
-			{$set: {streaming: streaming}}, 
+			{$set: {streaming: streaming, desc: desc}}, 
 			function(err) {
         if (err) console.warn("MONGO ERROR "+err.message);
         else console.log('successfully updated user streaming '+streaming);
+        
+        
+        // return json with tok + sessID
+        res.writeHead(200, { 'Content-Type': 'application/json' });   
+        res.write(JSON.stringify({ did:did, streaming: streaming, desc:desc}));
+        res.end();
     });
 	});	
 }
@@ -124,13 +134,28 @@ function getCurrentSessions(streaming, res) {
         res.write(JSON.stringify(results));
         res.end();
         
-        /*
-common.fs.readFile('./views/test.html', function (err, html) {
+
+        
+		});
+  });
+}
+
+
+function getCurrentSessionsWeb(streaming, res) {
+	var args = {};
+	if (streaming == 'true') args = {streaming:true};
+	else if (streaming == 'false') args = {streaming:false};
+
+	common.mongo.collection('users', function(e, c) {
+		c.find(args).toArray(function(err, results) {
+			console.log(results+" "+err);
+
+common.fs.readFile('./static/get_current_sessions.html', function (err, html) {
        		res.writeHead(200, { 'Content-Type': 'text/html' });   
         	res.write(html);
         	res.end();
         });
-*/
+
 	    
         
 		});
