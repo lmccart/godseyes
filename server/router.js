@@ -21,6 +21,10 @@ function route(url, res) {
   	var did = common.qs.parse(url)["deviceid"];
 	  setUserStreaming(did, false);
   }
+  
+  else if (pathname === "/get_current_sessions") {
+	  getCurrentSessions(res);
+  }
 }
 
 //common.otSessionId
@@ -33,10 +37,11 @@ function authenticateUser(did, desc, p2p, force, res) {
 
 	var tok = "";
 	
+	// note: forcing streaming to false
 	if (force) { // force create new session
 		newSession(p2pString, function(sessID) { 
 			var tok = newToken(sessID); 
-			updateUser(did, desc, sessID, tok, res);
+			updateUser(did, desc, sessID, tok, false, res);
 		});
 	} else {
 
@@ -45,11 +50,11 @@ function authenticateUser(did, desc, p2p, force, res) {
 			c.findOne({'did':did}, function(err, doc) {
 				if (doc) { 
 						var tok = newToken(doc.sessionID);
-						updateUser(did, desc, doc.sessionID, tok, res);
+						updateUser(did, desc, doc.sessionID, tok, false, res);
 				} else {  // create new id
 					newSession(p2pString, function(sessID) {
 						var tok = newToken(sessID);
-						updateUser(did, desc, sessID, tok, res);
+						updateUser(did, desc, sessID, tok, false, res);
 					});
 				}
 			});
@@ -76,11 +81,11 @@ var newToken = function(sessID) {
 }
 
 
-function updateUser(did, desc, sessID, tok, res) {
+function updateUser(did, desc, sessID, tok, stream, res) {
 	common.mongo.collection('users', function(e, c) {
 		// upsert user with tok + id
 		c.update({did: did},
-			{$set: {desc: desc, sessionID: sessID, token: tok }}, 
+			{$set: {desc: desc, sessionID: sessID, token: tok, streaming: stream }}, 
 			{upsert:true},
 			function(err) {
         if (err) console.warn("MONGO ERROR "+err.message);
@@ -88,7 +93,7 @@ function updateUser(did, desc, sessID, tok, res) {
         
         // return json with tok + sessID
         res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ did:did, desc:desc, token:tok, sessionID:sessID}));
+        res.write(JSON.stringify({ did:did, desc:desc, token:tok, sessionID:sessID, streaming: stream}));
         res.end();
     });
 	});
@@ -104,6 +109,17 @@ function setUserStreaming(did, streaming) {
         else console.log('successfully updated user streaming '+streaming);
     });
 	});	
+}
+
+function getCurrentSessions(res) {
+	common.mongo.collection('users', function(e, c) {
+		c.find({streaming:true}).toArray(function(err, results) {
+			console.log(results+" "+err);
+        res.writeHead(200, { 'Content-Type': 'application/json' });   
+        res.write(JSON.stringify(results));
+        res.end();
+		});
+  });
 }
 
 exports.route = route;
