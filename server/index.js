@@ -17,22 +17,16 @@ function start(route) {
 		console.log("mongo open");
 	});
 	
-	// create opentok session
-	var location = common.config.ip; // use an IP or 'localhost'
-	common.opentok.createSession(location, {'p2p.preference':'enabled'}, function(result){
-	  common.otSessionID = result;
-	  console.log(common.otSessionID+" session opened");
-	});
-	
+	common.newSession('enabled');
 
 	// routing fxn
 	function onRequest(req, res) {
     
-    route(req.url);
-    
+    route(req.url, res);
+    /*
 	  res.writeHead(200, {'Content-Type': 'text/html'});
 	  res.write('<h1>hello, i know nodejitsu.</h1>');
-	  res.end();
+	  res.end();*/
 	}
 	
 	// creates a new httpServer instance
