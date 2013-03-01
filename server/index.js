@@ -14,16 +14,21 @@ function start(route) {
 
 	// open mongo connect
   common.mongo.open(function(err, p_client) {
-		console.log("mongo open");
+	  if (err) { throw err; }
+	  console.log('mongo open');
+	  common.mongo.authenticate(common.config.mongo.user, common.config.mongo.pass, function (err, replies) {
+	    // You are now connected and authenticated.
+	    console.log('mongo authenticated');
+	  });
 	});
+	
 
 	// routing fxn
 	function onRequest(req, res) {
-    
-	  /*res.writeHead(200, {'Content-Type': 'text/html'});
-	  res.write('<h1>hello, i know nodejitsu.</h1>');
-	  res.end();*/
+	 
     route(req.url, res);
+    
+    //common.sendToSocket("HIHIHI");
     
 	}
 	

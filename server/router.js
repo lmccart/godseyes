@@ -23,7 +23,8 @@ function route(url, res) {
   }
   
   else if (pathname === "/get_current_sessions") {
-	  getCurrentSessions(res);
+  	var streaming = common.qs.parse(url)["streaming"];
+	  getCurrentSessions(streaming, res);
   }
 }
 
@@ -111,16 +112,32 @@ function setUserStreaming(did, streaming) {
 	});	
 }
 
-function getCurrentSessions(res) {
+function getCurrentSessions(streaming, res) {
+	var args = {};
+	if (streaming == 'true') args = {streaming:true};
+	else if (streaming == 'false') args = {streaming:false};
+
 	common.mongo.collection('users', function(e, c) {
-		c.find({streaming:true}).toArray(function(err, results) {
+		c.find(args).toArray(function(err, results) {
 			console.log(results+" "+err);
         res.writeHead(200, { 'Content-Type': 'application/json' });   
         res.write(JSON.stringify(results));
         res.end();
+        
+        /*
+common.fs.readFile('./views/test.html', function (err, html) {
+       		res.writeHead(200, { 'Content-Type': 'text/html' });   
+        	res.write(html);
+        	res.end();
+        });
+*/
+	    
+        
 		});
   });
 }
+
+
 
 exports.route = route;
 
