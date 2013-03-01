@@ -28,7 +28,7 @@
 
 
 // Require the configuration file
-var config = require(__dirname + "/config_prod.json");
+var config = require(__dirname + "/config.json");
 
 // Config opentok
 var OpenTok = require('opentok');
@@ -39,8 +39,8 @@ var Db = require('mongodb').Db;
 var MongoServer = require('mongodb').Server;
 var mongo = new Db(config.mongo.db, new MongoServer(config.mongo.host, config.mongo.port, {strict:true, auto_reconnect:true}), {w: 1});
 
-// Socket stuff
-/*var io = require('socket.io').listen(80);
+/*// Socket stuff
+var io = require('socket.io').listen(80);
 var socket;
 
 io.sockets.on('connection', function (socket) {
@@ -60,11 +60,11 @@ module.exports = {
 	net : require('net'),
 	qs: require('querystring'),
 	fs : require('fs'),
+	send : require('send'),
 	config : config,
 	mongo : mongo,
 	opentok : opentok,
 	OpenTok : OpenTok
-	//sendToSocket : sendToSocket
  	
 };
 

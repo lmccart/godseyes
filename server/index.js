@@ -25,11 +25,7 @@ function start(route) {
 
 	// routing fxn
 	function onRequest(req, res) {
-	 
     route(req.url, res);
-    
-    //common.sendToSocket("HIHIHI");
-    
 	}
 	
 	// creates a new httpServer instance

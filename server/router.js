@@ -26,9 +26,8 @@ function route(url, res) {
   	var streaming = common.qs.parse(url)["streaming"];
 	  getCurrentSessions(streaming, res);
   }
-  else if (pathname === "/get_current_sessions_web") {
-  	var streaming = common.qs.parse(url)["streaming"];
-	  getCurrentSessionsWeb(streaming, res);
+  else if (pathname === "/clear_db") {
+  	clearDB(res);
   }
 }
 
@@ -140,28 +139,14 @@ function getCurrentSessions(streaming, res) {
   });
 }
 
-
-function getCurrentSessionsWeb(streaming, res) {
-	var args = {};
-	if (streaming == 'true') args = {streaming:true};
-	else if (streaming == 'false') args = {streaming:false};
-
+function clearDB(res) {
+	
 	common.mongo.collection('users', function(e, c) {
-		c.find(args).toArray(function(err, results) {
-			console.log(results+" "+err);
-
-common.fs.readFile('./static/get_current_sessions.html', function (err, html) {
-       		res.writeHead(200, { 'Content-Type': 'text/html' });   
-        	res.write(html);
-        	res.end();
-        });
-
-	    
-        
-		});
+    c.drop(function(err, reply) {
+	    getCurrentSessions('', res);
+    });
   });
 }
-
 
 
 exports.route = route;
