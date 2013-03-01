@@ -19,6 +19,9 @@ function start(route) {
 	  common.mongo.authenticate(common.config.mongo.user, common.config.mongo.pass, function (err, replies) {
 	    // You are now connected and authenticated.
 	    console.log('mongo authenticated');
+	    
+	    //setInterval(router.refreshDB, 60*1000); //PEND TURN BACK ON AFTER TESTING
+	    
 	  });
 	});
 	

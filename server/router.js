@@ -19,15 +19,28 @@ function route(url, res) {
 	  setUserStreaming(did, true, desc, res);
   } else if (pathname === "/user_session_ended") {
   	var did = common.qs.parse(url)["deviceid"];
+  	var points = common.qs.parse(url)["points"];
 	  setUserStreaming(did, false, "", res);
+	  setUserPoints(did, points, res);
   }
   
   else if (pathname === "/get_current_sessions") {
   	var streaming = common.qs.parse(url)["streaming"];
 	  getCurrentSessions(streaming, res);
   }
+  
+  else if (pathname === "/ping") {
+  	var did = common.qs.parse(url)["deviceid"];
+  	var points = common.qs.parse(url)["points"];
+	  setUserPoints(did, points, res);
+  }
+  
   else if (pathname === "/clear_db") {
   	clearDB(res);
+  }
+  
+  else if (pathname === "/refresh_db") {
+  	refreshDB(res);
   }
 }
 
@@ -45,7 +58,7 @@ function authenticateUser(did, p2p, force, res) {
 	if (force) { // force create new session
 		newSession(p2pString, function(sessID) { 
 			var tok = newToken(sessID); 
-			updateUser(did, sessID, tok, false, res);
+			updateUser(did, sessID, tok, false, 0, res);
 		});
 	} else {
 
@@ -54,11 +67,11 @@ function authenticateUser(did, p2p, force, res) {
 			c.findOne({'did':did}, function(err, doc) {
 				if (doc) { 
 						var tok = newToken(doc.sessionID);
-						updateUser(did, doc.sessionID, tok, false, res);
+						updateUser(did, doc.sessionID, tok, false, doc.points, res);
 				} else {  // create new id
 					newSession(p2pString, function(sessID) {
 						var tok = newToken(sessID);
-						updateUser(did, sessID, tok, false, res);
+						updateUser(did, sessID, tok, false, 0, res);
 					});
 				}
 			});
@@ -85,11 +98,11 @@ var newToken = function(sessID) {
 }
 
 
-function updateUser(did, sessID, tok, stream, res) {
+function updateUser(did, sessID, tok, stream, points, res) {
 	common.mongo.collection('users', function(e, c) {
 		// upsert user with tok + id
 		c.update({did: did},
-			{$set: {sessionID: sessID, token: tok, streaming: stream }}, 
+			{$set: {sessionID: sessID, token: tok, streaming: stream, points: points, updated:  new Date().getTime() }}, 
 			{upsert:true},
 			function(err) {
         if (err) console.warn("MONGO ERROR "+err.message);
@@ -97,7 +110,7 @@ function updateUser(did, sessID, tok, stream, res) {
         
         // return json with tok + sessID
         res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ did:did, token:tok, sessionID:sessID, streaming: stream}));
+        res.write(JSON.stringify({ did:did, token:tok, sessionID:sessID, streaming: stream, points: points}));
         res.end();
     });
 	});
@@ -139,6 +152,24 @@ function getCurrentSessions(streaming, res) {
   });
 }
 
+
+function setUserPoints(did, points, res) {
+	common.mongo.collection('users', function(e, c) {
+		c.update({did: did},
+			{$set: {points: parseInt(points, 10), updated: new Date().getTime() }}, 
+			function(err) {
+        if (err) console.warn("MONGO ERROR "+err.message);
+        else console.log('successfully updated user points '+points);
+
+        // return json with tok + sessID
+        res.writeHead(200, { 'Content-Type': 'application/json' });   
+        res.write(JSON.stringify({ did:did, points: parseInt(points, 10)}));
+        res.end();
+    });
+	});	
+}
+
+
 function clearDB(res) {
 	
 	common.mongo.collection('users', function(e, c) {
@@ -148,8 +179,17 @@ function clearDB(res) {
   });
 }
 
+function refreshDB() {
+	common.mongo.collection('users', function(e, c) {	
+		var t = new Date().getTime() - (2*60*1000);
+		c.findAndModify({updated: { $lt: t}}, {}, {}, { remove: true } , function(err, doc) {
+			console.log("removed "+doc);
+		});
+	});
+}
 
 exports.route = route;
+exports.refreshDB = refreshDB;
 
 
 
