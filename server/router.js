@@ -6,22 +6,22 @@ function route(url, res) {
   console.log("About to route a request for " + pathname);
   
   if (pathname === "/authenticate_user") {
-  	var did = common.qs.parse(url)["deviceid"];
+  	var deviceid = common.qs.parse(url)["deviceid"];
   	var p2p = common.qs.parse(url)["p2p"];
   	var force = common.qs.parse(url)["force"];
   	
-  	//console.log("did:"+did+" p2p:"+p2p+" force:"+force);	
-  	authenticateUser(did, p2p, force, res);
+  	//console.log("deviceid:"+deviceid+" p2p:"+p2p+" force:"+force);	
+  	authenticateUser(deviceid, p2p, force, res);
   	
   } else if (pathname === "/user_session_started") {
-  	var did = common.qs.parse(url)["deviceid"];
+  	var deviceid = common.qs.parse(url)["deviceid"];
   	var desc = common.qs.parse(url)["desc"];
-	  setUserStreaming(did, true, desc, res);
+	  setUserStreaming(deviceid, true, desc, res);
   } else if (pathname === "/user_session_ended") {
-  	var did = common.qs.parse(url)["deviceid"];
+  	var deviceid = common.qs.parse(url)["deviceid"];
   	var points = common.qs.parse(url)["points"];
-	  setUserStreaming(did, false, "", res);
-	  setUserPoints(did, points, res);
+	  setUserStreaming(deviceid, false, "", res);
+	  setUserPoints(deviceid, points, res);
   }
   
   else if (pathname === "/get_current_sessions") {
@@ -29,16 +29,15 @@ function route(url, res) {
 	  getCurrentSessions(streaming, res);
   }
   else if (pathname === "/enter_session") {
-  	var did = common.qs.parse(url)["deviceid"];
-	  var sessID = common.qs.parse(url)["sessionid"];
-	  enterSession(did, sessID, res);
+	  var sessionid = common.qs.parse(url)["sessionid"];
+	  enterSession(sessionid, res);
   }
   
   // DB management methods
   else if (pathname === "/ping") {
-  	var did = common.qs.parse(url)["deviceid"];
+  	var deviceid = common.qs.parse(url)["deviceid"];
   	var points = common.qs.parse(url)["points"];
-	  setUserPoints(did, points, res);
+	  setUserPoints(deviceid, points, res);
   }
   else if (pathname === "/clear_db") {
   	clearDB(res);
@@ -49,8 +48,8 @@ function route(url, res) {
   
   // god logics
   else if (pathname === "/set_god") {
-  	var did = common.qs.parse(url)["deviceid"];
-  	setGod(did, res);
+  	var deviceid = common.qs.parse(url)["deviceid"];
+  	setGod(deviceid, res);
   }
   // god logics
   else if (pathname === "/remove_god") {
@@ -60,7 +59,7 @@ function route(url, res) {
 
 //common.otSessionId
 
-function authenticateUser(did, p2p, force, res) {
+function authenticateUser(deviceid, p2p, force, res) {
 	
 	// if force flag, reset session automatically
 	
@@ -70,22 +69,22 @@ function authenticateUser(did, p2p, force, res) {
 	
 	// note: forcing streaming to false
 	if (force) { // force create new session
-		newSession(p2pString, function(sessID) { 
-			var tok = newToken(sessID); 
-			updateUser(did, sessID, tok, false, 0, res);
+		newSession(p2pString, function(sessionid) { 
+			var tok = newToken(sessionid); 
+			updateUser(deviceid, sessionid, tok, false, 0, res);
 		});
 	} else {
 
 		// check if in db already
 		common.mongo.collection('users', function(e, c) {	
-			c.findOne({'did':did}, function(err, doc) {
+			c.findOne({'deviceid':deviceid}, function(err, doc) {
 				if (doc) { 
-						var tok = newToken(doc.sid);
-						updateUser(did, doc.sid, tok, false, doc.points, res);
+						var tok = newToken(doc.sessionid);
+						updateUser(deviceid, doc.sessionid, tok, false, doc.points, res);
 				} else {  // create new id
-					newSession(p2pString, function(sessID) {
-						var tok = newToken(sessID);
-						updateUser(did, sessID, tok, false, 0, res);
+					newSession(p2pString, function(sessionid) {
+						var tok = newToken(sessionid);
+						updateUser(deviceid, sessionid, tok, false, 0, res);
 					});
 				}
 			});
@@ -104,45 +103,45 @@ function newSession(p2p, cb) {
 }
 
 
-var newToken = function(sessID) {
-	var token = common.opentok.generateToken({session_id:sessID, 
+var newToken = function(sessionid) {
+	var token = common.opentok.generateToken({session_id:sessionid, 
 		role:common.OpenTok.RoleConstants.PUBLISHER, 
 		connection_data:"userId:42temp"}); //metadata to pass to other users connected to the session. (eg. names, user id, etc)
 	return token;			
 }
 
 
-function updateUser(did, sessID, tok, stream, points, res) {
+function updateUser(deviceid, sessionid, tok, stream, points, res) {
 	common.mongo.collection('users', function(e, c) {
 		// upsert user with tok + id
-		c.update({did: did},
-			{$set: {sid: sessID, token: tok, streaming: stream, points: points, updated:  new Date().getTime() }}, 
+		c.update({deviceid: deviceid},
+			{$set: {sessionid: sessionid, token: tok, streaming: stream, points: points, updated:  new Date().getTime() }}, 
 			{upsert:true},
 			function(err) {
         if (err) console.warn("MONGO ERROR "+err.message);
         else console.log('successfully updated');
         
-        // return json with tok + sessID
+        // return json with tok + sessionid
         res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ did:did, token:tok, sid:sessID, streaming: stream, points: points}));
+        res.write(JSON.stringify({ deviceid:deviceid, token:tok, sessionid:sessionid, streaming: stream, points: points}));
         res.end();
     });
 	});
 }
 
-function setUserStreaming(did, streaming, desc, res) {
+function setUserStreaming(deviceid, streaming, desc, res) {
 	common.mongo.collection('users', function(e, c) {
 		// upsert user with tok + id
-		c.update({did: did},
+		c.update({deviceid: deviceid},
 			{$set: {streaming: streaming, desc: desc}}, 
 			function(err) {
         if (err) console.warn("MONGO ERROR "+err.message);
         else console.log('successfully updated user streaming '+streaming);
         
         
-        // return json with tok + sessID
+        // return json with tok + sessionid
         res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ did:did, streaming: streaming, desc:desc}));
+        res.write(JSON.stringify({ deviceid:deviceid, streaming: streaming, desc:desc}));
         res.end();
     });
 	});	
@@ -163,51 +162,41 @@ function getCurrentSessions(streaming, res) {
   });
 }
 
-function enterSession(did, sessID, res) {
-	var tok = newToken(sessID);
-	
-	common.mongo.collection('users', function(e, c) {
-		// upsert user with tok
-		c.update({did: did},
-			{$set: {sid: sessID, token: tok }}, 
-			{upsert:false},
-			function(err) {
-        if (err) console.warn("MONGO ERROR "+err.message);
-        else console.log('successfully updated');
-        
-        // return json with tok + sessID
-        res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ token:tok }));
-        res.end();
-    });
-	});
+function enterSession(deviceid, sessionid, res) {
+	var tok = newToken(sessionid);
+
+  // return json with tok + sessionid
+  res.writeHead(200, { 'Content-Type': 'application/json' });   
+  res.write(JSON.stringify({ token:tok }));
+  res.end();
+
 }
 
 
-function setUserPoints(did, points, res) {
+function setUserPoints(deviceid, points, res) {
 	common.mongo.collection('users', function(e, c) {
-		c.update({did: did},
+		c.update({deviceid: deviceid},
 			{$set: {points: parseInt(points, 10), updated: new Date().getTime() }}, 
 			function(err) {
         if (err) console.warn("MONGO ERROR "+err.message);
         else console.log('successfully updated user points '+points);
 
-        // return json with tok + sessID
+        // return json with tok + sessionid
         res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ did:did, points: parseInt(points, 10)}));
+        res.write(JSON.stringify({ deviceid:deviceid, points: parseInt(points, 10)}));
         res.end();
     });
 	});	
 }
 
-function setGod(did, res) {
+function setGod(deviceid, res) {
 	removeGod();
 	common.mongo.collection('users', function(e, c) {
-		c.update({did: did},
+		c.update({deviceid: deviceid},
 			{$set: {isGod: true, godStart: new Date().Time(), points: 0 }}, 
 			function(err) {
         if (err) console.warn("MONGO ERROR "+err.message);
-        console.log('god is now '+did);
+        console.log('god is now '+deviceid);
     });
 	});	
 }
@@ -218,8 +207,8 @@ function removeGod() {
 			function(err, object) {
         if (err) console.warn("MONGO ERROR "+err.message);
         if (object) {	
-        	console.log('removed god '+object.did);
-        	common.sendPush(did, 'You are no longer god');
+        	console.log('removed god '+object.deviceid);
+        	common.sendPush(deviceid, 'You are no longer god');
         } else console.log('no current god');
     });
 	});	
