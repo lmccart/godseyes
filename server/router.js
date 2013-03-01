@@ -28,19 +28,33 @@ function route(url, res) {
   	var streaming = common.qs.parse(url)["streaming"];
 	  getCurrentSessions(streaming, res);
   }
+  else if (pathname === "/enter_session") {
+  	var did = common.qs.parse(url)["deviceid"];
+	  var sessID = common.qs.parse(url)["sessionid"];
+	  enterSession(did, sessID, res);
+  }
   
+  // DB management methods
   else if (pathname === "/ping") {
   	var did = common.qs.parse(url)["deviceid"];
   	var points = common.qs.parse(url)["points"];
 	  setUserPoints(did, points, res);
   }
-  
   else if (pathname === "/clear_db") {
   	clearDB(res);
   }
-  
   else if (pathname === "/refresh_db") {
   	refreshDB(res);
+  }
+  
+  // god logics
+  else if (pathname === "/set_god") {
+  	var did = common.qs.parse(url)["deviceid"];
+  	setGod(did, res);
+  }
+  // god logics
+  else if (pathname === "/remove_god") {
+  	removeGod();
   }
 }
 
@@ -66,8 +80,8 @@ function authenticateUser(did, p2p, force, res) {
 		common.mongo.collection('users', function(e, c) {	
 			c.findOne({'did':did}, function(err, doc) {
 				if (doc) { 
-						var tok = newToken(doc.sessionID);
-						updateUser(did, doc.sessionID, tok, false, doc.points, res);
+						var tok = newToken(doc.sid);
+						updateUser(did, doc.sid, tok, false, doc.points, res);
 				} else {  // create new id
 					newSession(p2pString, function(sessID) {
 						var tok = newToken(sessID);
@@ -102,7 +116,7 @@ function updateUser(did, sessID, tok, stream, points, res) {
 	common.mongo.collection('users', function(e, c) {
 		// upsert user with tok + id
 		c.update({did: did},
-			{$set: {sessionID: sessID, token: tok, streaming: stream, points: points, updated:  new Date().getTime() }}, 
+			{$set: {sid: sessID, token: tok, streaming: stream, points: points, updated:  new Date().getTime() }}, 
 			{upsert:true},
 			function(err) {
         if (err) console.warn("MONGO ERROR "+err.message);
@@ -110,7 +124,7 @@ function updateUser(did, sessID, tok, stream, points, res) {
         
         // return json with tok + sessID
         res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ did:did, token:tok, sessionID:sessID, streaming: stream, points: points}));
+        res.write(JSON.stringify({ did:did, token:tok, sid:sessID, streaming: stream, points: points}));
         res.end();
     });
 	});
@@ -145,11 +159,28 @@ function getCurrentSessions(streaming, res) {
         res.writeHead(200, { 'Content-Type': 'application/json' });   
         res.write(JSON.stringify(results));
         res.end();
-        
-
-        
 		});
   });
+}
+
+function enterSession(did, sessID, res) {
+	var tok = newToken(sessID);
+	
+	common.mongo.collection('users', function(e, c) {
+		// upsert user with tok
+		c.update({did: did},
+			{$set: {sid: sessID, token: tok }}, 
+			{upsert:false},
+			function(err) {
+        if (err) console.warn("MONGO ERROR "+err.message);
+        else console.log('successfully updated');
+        
+        // return json with tok + sessID
+        res.writeHead(200, { 'Content-Type': 'application/json' });   
+        res.write(JSON.stringify({ token:tok }));
+        res.end();
+    });
+	});
 }
 
 
@@ -165,6 +196,31 @@ function setUserPoints(did, points, res) {
         res.writeHead(200, { 'Content-Type': 'application/json' });   
         res.write(JSON.stringify({ did:did, points: parseInt(points, 10)}));
         res.end();
+    });
+	});	
+}
+
+function setGod(did, res) {
+	removeGod();
+	common.mongo.collection('users', function(e, c) {
+		c.update({did: did},
+			{$set: {isGod: true, godStart: new Date().Time(), points: 0 }}, 
+			function(err) {
+        if (err) console.warn("MONGO ERROR "+err.message);
+        console.log('god is now '+did);
+    });
+	});	
+}
+
+function removeGod() {
+	common.mongo.collection('users', function(e, c) {
+		c.findAndModify({isGod: true}, {}, {$set: {isGod: false}}, {upsert: false},
+			function(err, object) {
+        if (err) console.warn("MONGO ERROR "+err.message);
+        if (object) {	
+        	console.log('removed god '+object.did);
+        	common.sendPush(did, 'You are no longer god');
+        } else console.log('no current god');
     });
 	});	
 }

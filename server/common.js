@@ -54,6 +54,10 @@ var sendToSocket = function(msg) {
 	}
 };*/
 
+var sendPush = function(did, msg) {
+	
+};
+
 // Exports
 module.exports = {
 	url : require('url'),
@@ -64,7 +68,8 @@ module.exports = {
 	config : config,
 	mongo : mongo,
 	opentok : opentok,
-	OpenTok : OpenTok
+	OpenTok : OpenTok,
+	sendPush : sendPush
  	
 };
 

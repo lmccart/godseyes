@@ -3,7 +3,7 @@
   "scripts": {
     "start": "index.js"
   },
-  "version": "0.0.0-46",
+  "version": "0.0.0-47",
   "engines": {
     "node": "0.8.x"
   },
