@@ -17,22 +17,21 @@ function start(route) {
 		console.log("mongo open");
 	});
 	
-	// create opentok sessions
+	// create opentok session
 	var location = common.config.ip; // use an IP or 'localhost'
-	common.opentok.createSession(location, function(result){
-	  common.otSessionId = result;
-	  // Do things with sessionId
+	common.opentok.createSession(location, {'p2p.preference':'enabled'}, function(result){
+	  common.otSessionID = result;
+	  console.log(common.otSessionID+" session opened");
 	});
 	
+
 	// routing fxn
 	function onRequest(req, res) {
-    var pathname = common.url.parse(req.url).pathname;
-    console.log("Request for " + pathname + " received.");
     
-    route(pathname);
+    route(req.url);
     
 	  res.writeHead(200, {'Content-Type': 'text/html'});
-	  res.write('<h1>hello, i know nodejitsu.'+pathname+'</h1>');
+	  res.write('<h1>hello, i know nodejitsu.</h1>');
 	  res.end();
 	}
 	

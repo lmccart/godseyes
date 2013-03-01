@@ -45,10 +45,12 @@ var mongo = new Db(config.mongo.db, new MongoServer(config.mongo.host, config.mo
 module.exports = {
 	url : require('url'),
 	net : require('net'),
+	qs: require('querystring'),
 	fs : fs,
 	config : config,
 	mongo : mongo,
-	opentok : opentok
+	opentok : opentok,
+	OpenTok : OpenTok
  	
 };
 
