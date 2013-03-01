@@ -40,15 +40,7 @@ var Db = require('mongodb').Db;
 var MongoServer = require('mongodb').Server;
 var mongo = new Db(config.mongo.db, new MongoServer(config.mongo.host, config.mongo.port, {strict:true, auto_reconnect:true}), {w: 1});
 	
-var newSession = function(p2p) {
-	
-	// create opentok session
-	var location = config.ip; // use an IP or 'localhost'
-	opentok.createSession(location, {'p2p.preference':p2p}, function(result){
-	module.exports.otSessionID = result;
-	console.log(module.exports.otSessionID+" session opened");
-	});
-};
+
 	
 // Exports
 module.exports = {
@@ -59,9 +51,7 @@ module.exports = {
 	config : config,
 	mongo : mongo,
 	opentok : opentok,
-	OpenTok : OpenTok,
-	newSession : newSession,
-	otSessionID : 'none'
+	OpenTok : OpenTok
  	
 };
 

@@ -16,17 +16,15 @@ function start(route) {
   common.mongo.open(function(err, p_client) {
 		console.log("mongo open");
 	});
-	
-	common.newSession('enabled');
 
 	// routing fxn
 	function onRequest(req, res) {
     
-    route(req.url, res);
-    /*
-	  res.writeHead(200, {'Content-Type': 'text/html'});
+	  /*res.writeHead(200, {'Content-Type': 'text/html'});
 	  res.write('<h1>hello, i know nodejitsu.</h1>');
 	  res.end();*/
+    route(req.url, res);
+    
 	}
 	
 	// creates a new httpServer instance
