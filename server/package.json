@@ -3,7 +3,7 @@
   "scripts": {
     "start": "index.js"
   },
-  "version": "0.0.0-50",
+  "version": "0.0.0-60",
   "engines": {
     "node": "0.8.x"
   },
@@ -14,7 +14,7 @@
   "dependencies": {
     "mongodb": "1.2.13",
     "opentok": "0.3.1",
-    "socket.io": "0.9.x",
+    "urban-airship": "0.2.4",
     "send": "0.1.x"
   },
   "subdomain": "godseyes"

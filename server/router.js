@@ -13,7 +13,14 @@ function route(url, res) {
   	//console.log("deviceid:"+deviceid+" p2p:"+p2p+" force:"+force);	
   	authenticateUser(deviceid, p2p, force, res);
   	
-  } else if (pathname === "/user_session_started") {
+  } 
+  else if (pathname === "/set_airship_token") {
+  	var deviceid = common.qs.parse(url)["deviceid"];
+  	var airshiptoken = common.qs.parse(url)["airshiptoken"];
+  	setAirshipToken(deviceid, airshiptoken, res);
+  }
+  
+  else if (pathname === "/user_session_started") {
   	var deviceid = common.qs.parse(url)["deviceid"];
   	var desc = common.qs.parse(url)["desc"];
 	  setUserStreaming(deviceid, true, desc, res);
@@ -51,9 +58,20 @@ function route(url, res) {
   	var deviceid = common.qs.parse(url)["deviceid"];
   	setGod(deviceid, res);
   }
-  // god logics
   else if (pathname === "/remove_god") {
   	removeGod();
+  }
+  else if (pathname === "/summon_eyes") {
+	  common.broadcastPush("my eyes I summon you", res);
+  }
+  else if (pathname === "/how_long_god_available"){
+  
+  }
+  
+  // testing methods
+  else if (pathname === "/test_send") {
+  	var airshiptoken = common.qs.parse(url)["airshiptoken"];
+	  common.sendPush(airshiptoken, "test send", res);
   }
 }
 
@@ -61,12 +79,10 @@ function route(url, res) {
 
 function authenticateUser(deviceid, p2p, force, res) {
 	
-	// if force flag, reset session automatically
-	
 	var p2pString = p2p ? 'enabled' : 'disabled';
-
 	var tok = "";
 	
+	// if force flag, reset session automatically
 	// note: forcing streaming to false
 	if (force) { // force create new session
 		newSession(p2pString, function(sessionid) { 
@@ -129,6 +145,28 @@ function updateUser(deviceid, sessionid, tok, stream, points, res) {
 	});
 }
 
+function setAirshipToken(deviceid, airshiptoken, res) {
+
+	// register with ua
+	common.ua.registerDevice(airshiptoken.toUpperCase(), function(error) {
+		if (error) console.log("airship error! "+error);
+		common.mongo.collection('users', function(e, c) {
+			// upsert user with tok + id
+			c.update({deviceid: deviceid},
+				{$set: {airshiptoken: airshiptoken.toUpperCase()}}, 
+				function(err) {
+	        if (err) console.warn("MONGO ERROR "+err.message);
+	        else console.log('successfully updated ua token '+airshiptoken.toUpperCase());
+		        
+	        // return json with tok + sessionid
+	        res.writeHead(200, { 'Content-Type': 'application/json' });   
+	        res.write(JSON.stringify({ deviceid:deviceid, airshiptoken:airshiptoken.toUpperCase()}));
+	        res.end();
+	    });
+		});	
+	});
+}
+
 function setUserStreaming(deviceid, streaming, desc, res) {
 	common.mongo.collection('users', function(e, c) {
 		// upsert user with tok + id
@@ -162,7 +200,7 @@ function getCurrentSessions(streaming, res) {
   });
 }
 
-function enterSession(deviceid, sessionid, res) {
+function enterSession(sessionid, res) {
 	var tok = newToken(sessionid);
 
   // return json with tok + sessionid
@@ -197,6 +235,11 @@ function setGod(deviceid, res) {
 			function(err) {
         if (err) console.warn("MONGO ERROR "+err.message);
         console.log('god is now '+deviceid);
+        
+        // return json with tok + sessionid
+        res.writeHead(200, { 'Content-Type': 'application/json' });   
+        res.write(JSON.stringify({ deviceid:deviceid}));
+        res.end();
     });
 	});	
 }
@@ -208,7 +251,7 @@ function removeGod() {
         if (err) console.warn("MONGO ERROR "+err.message);
         if (object) {	
         	console.log('removed god '+object.deviceid);
-        	common.sendPush(deviceid, 'You are no longer god');
+        	common.sendPush(object.airshiptoken, 'You are no longer god');
         } else console.log('no current god');
     });
 	});	

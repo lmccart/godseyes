@@ -28,7 +28,8 @@
 
 
 // Require the configuration file
-var config = require(__dirname + "/config_prod.json");
+//var config = require(__dirname + "/config_prod.json");
+var config = require(__dirname + "/config.json");
 
 // Config opentok
 var OpenTok = require('opentok');
@@ -54,8 +55,69 @@ var sendToSocket = function(msg) {
 	}
 };*/
 
-var sendPush = function(did, msg) {
-	
+// Push notifications
+var UA = require('urban-airship');
+ua = new UA(config.ua.appkey, config.ua.appsecret, config.ua.appmastersecret);
+
+//app key: jEzYHFRERgKkyWE9R_nhyw
+//app secret: A2jpyiKeS6aEbmRIoLzhKw
+
+var sendPush = function(did, msg, res) {
+
+	var payload0 = {
+    "device_tokens": [ did ],
+    "aps": {
+        "alert": msg,
+        "badge": 2
+    }
+  };
+
+  ua.pushNotification("/api/push", payload0, function(error) {
+	  if (error) console.log("ua error sending payload "+error);
+	  
+	  
+    // return json with tok + sessionid
+    res.writeHead(200, { 'Content-Type': 'application/json' });   
+    res.write(JSON.stringify({ deviceid:did, success:true }));
+    res.end();
+	  
+  });
+
+};
+
+
+var broadcastPush = function(msg, res) {
+	mongo.collection('users', function(e, c) {	
+		c.findOne({'isGod':true}, function(err, doc) {
+			if (doc) { 
+				var payload1 = {
+			    "aps": {
+			         "badge": 15,
+			         "alert": "Calling Urban Airship!",
+			         "sound": "cat.caf"
+			    },
+			    "exclude_tokens": [ doc.airshiptoken ]
+			  };
+			
+				ua.pushNotification("/api/push/broadcast/", payload1, function(error) {
+					if (error) console.log('failed to broadcast '+error);
+					
+			    // return json with tok + sessionid
+			    res.writeHead(200, { 'Content-Type': 'application/json' });   
+			    res.write(JSON.stringify({ success: true }));
+			    res.end();
+								
+				});
+			} else {
+				console.log('failed to find god');
+				
+		    // return json with tok + sessionid
+		    res.writeHead(200, { 'Content-Type': 'application/json' });   
+		    res.write(JSON.stringify({ success: false }));
+		    res.end();
+			}
+		});
+	});
 };
 
 // Exports
@@ -69,7 +131,9 @@ module.exports = {
 	mongo : mongo,
 	opentok : opentok,
 	OpenTok : OpenTok,
-	sendPush : sendPush
+	sendPush : sendPush,
+	broadcastPush : broadcastPush,
+	ua : ua
  	
 };
 
