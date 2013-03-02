@@ -20,7 +20,7 @@ function start(route) {
 	    // You are now connected and authenticated.
 	    console.log('mongo authenticated');
 	    
-	    //setInterval(router.refreshDB, 60*1000); //PEND TURN BACK ON AFTER TESTING
+	    setInterval(router.refreshDB, 3*1000); //PEND TURN BACK ON AFTER TESTING
 	    
 	  });
 	});

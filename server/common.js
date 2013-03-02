@@ -28,8 +28,8 @@
 
 
 // Require the configuration file
-var config = require(__dirname + "/config_prod.json");
-//var config = require(__dirname + "/config.json");
+//var config = require(__dirname + "/config_prod.json");
+var config = require(__dirname + "/config.json");
 
 // Config opentok
 var OpenTok = require('opentok');
@@ -39,6 +39,9 @@ var opentok = new OpenTok.OpenTokSDK(config.opentok.key, config.opentok.secret);
 var Db = require('mongodb').Db;
 var MongoServer = require('mongodb').Server;
 var mongo = new Db(config.mongo.db, new MongoServer(config.mongo.host, config.mongo.port, {strict:true, auto_reconnect:true}), {w: 1});
+
+// Date helpers
+require('date-utils');
 
 /*// Socket stuff
 var io = require('socket.io').listen(80);
@@ -66,7 +69,7 @@ ua = new UA(config.ua.appkey, config.ua.appsecret, config.ua.appmastersecret);
 var sendPush = function(airshiptoken, msg, res) {
 
 	var payload0 = {
-    "device_tokens": [ did ],
+    "device_tokens": [ airshiptoken ],
     "aps": {
         "alert": msg,
         "badge": 2
@@ -76,12 +79,12 @@ var sendPush = function(airshiptoken, msg, res) {
   ua.pushNotification("/api/push", payload0, function(error) {
 	  if (error) console.log("ua error sending payload "+error);
 	  
-	  
-    // return json with tok + sessionid
-    res.writeHead(200, { 'Content-Type': 'application/json' });   
-    res.write(JSON.stringify({ airshiptoken:airshiptoken, success:true }));
-    res.end();
-	  
+	  else {
+	    // return json with tok + sessionid
+	    res.writeHead(200, { 'Content-Type': 'application/json' });   
+	    res.write(JSON.stringify({ airshiptoken:airshiptoken, success:true }));
+	    res.end();
+	  }
   });
 
 };
@@ -127,7 +130,6 @@ module.exports = {
 	net : require('net'),
 	qs: require('querystring'),
 	fs : require('fs'),
-	send : require('send'),
 	config : config,
 	mongo : mongo,
 	opentok : opentok,
