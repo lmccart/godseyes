@@ -72,7 +72,7 @@ function route(url, res) {
   else if (pathname === "/message_god") {
   	var deviceid = common.qs.parse(url)["deviceid"];
   	var msg = common.qs.parse(url)["msg"];
-	  messageGod(devicedid, msg, res);
+	  messageGod(deviceid, msg, res);
   }
   
   // testing methods
@@ -301,13 +301,14 @@ function whatTimeGod(res) {
 		});
 	});
 }
-/*
+
 function messageGod(deviceid, msg, res) {
 	common.mongo.collection('users', function(e, c) {	
 		c.findOne({isGod:true}, function(err, doc) {
 			if (doc) { 
+				common.sendPush(doc.airshiptoken, msg, res);
         res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ points: points}));
+        res.write(JSON.stringify({ status: "message sent" }));
         res.end();
 			} else {  
 				console.log("no god found");
@@ -316,11 +317,9 @@ function messageGod(deviceid, msg, res) {
         res.write(JSON.stringify({ status: "no god found."}));
         res.end();
 			}
-      
-			
 		});
 	});
-}*/
+}
 
 function clearDB(res) {
 	
@@ -335,8 +334,8 @@ function refreshDB() {
 	common.mongo.collection('users', function(e, c) {	
 		var t = new Date().getTime() - (15*1000);
 		
-		c.findAndModify({updated: { $lt: t}}, {}, {$set: {streaming: false}}, {upsert: false}, function(err, doc) {
-			console.log("removed "+doc);
+		c.findAndModify({updated: { $lt: t}, streaming: true}, {}, {$set: {streaming: false}}, {upsert: false}, function(err, doc) {
+			if (doc) console.log("removed "+doc.deviceid);
 		});
 	});
 }

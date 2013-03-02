@@ -72,7 +72,8 @@ var sendPush = function(airshiptoken, msg, res) {
     "device_tokens": [ airshiptoken ],
     "aps": {
         "alert": msg,
-        "badge": 2
+        "badge": 0,
+        "sound": "default"
     }
   };
 
@@ -96,9 +97,9 @@ var broadcastPush = function(msg, res) {
 			if (doc) { 
 				var payload1 = {
 			    "aps": {
-			         "badge": 15,
 			         "alert": msg,
-			         "sound": "cat.caf"
+			         "badge": 0,
+			         "sound": "default"
 			    },
 			    "exclude_tokens": [ doc.airshiptoken ]
 			  };
