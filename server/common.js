@@ -28,8 +28,8 @@
 
 
 // Require the configuration file
-//var config = require(__dirname + "/config_prod.json");
-var config = require(__dirname + "/config.json");
+var config = require(__dirname + "/config_prod.json");
+//var config = require(__dirname + "/config.json");
 
 // Config opentok
 var OpenTok = require('opentok');
@@ -62,7 +62,8 @@ ua = new UA(config.ua.appkey, config.ua.appsecret, config.ua.appmastersecret);
 //app key: jEzYHFRERgKkyWE9R_nhyw
 //app secret: A2jpyiKeS6aEbmRIoLzhKw
 
-var sendPush = function(did, msg, res) {
+// send to user
+var sendPush = function(airshiptoken, msg, res) {
 
 	var payload0 = {
     "device_tokens": [ did ],
@@ -78,14 +79,14 @@ var sendPush = function(did, msg, res) {
 	  
     // return json with tok + sessionid
     res.writeHead(200, { 'Content-Type': 'application/json' });   
-    res.write(JSON.stringify({ deviceid:did, success:true }));
+    res.write(JSON.stringify({ airshiptoken:airshiptoken, success:true }));
     res.end();
 	  
   });
 
 };
 
-
+// send to all but god
 var broadcastPush = function(msg, res) {
 	mongo.collection('users', function(e, c) {	
 		c.findOne({'isGod':true}, function(err, doc) {
@@ -93,7 +94,7 @@ var broadcastPush = function(msg, res) {
 				var payload1 = {
 			    "aps": {
 			         "badge": 15,
-			         "alert": "Calling Urban Airship!",
+			         "alert": msg,
 			         "sound": "cat.caf"
 			    },
 			    "exclude_tokens": [ doc.airshiptoken ]

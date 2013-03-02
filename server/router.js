@@ -58,14 +58,11 @@ function route(url, res) {
   	var deviceid = common.qs.parse(url)["deviceid"];
   	setGod(deviceid, res);
   }
-  else if (pathname === "/remove_god") {
-  	removeGod();
-  }
   else if (pathname === "/summon_eyes") {
 	  common.broadcastPush("my eyes I summon you", res);
   }
-  else if (pathname === "/how_long_god_available"){
-  
+  else if (pathname === "/how_long_god"){
+  	howLongGod(res);
   }
   
   // testing methods
@@ -86,7 +83,7 @@ function authenticateUser(deviceid, p2p, force, res) {
 	// note: forcing streaming to false
 	if (force) { // force create new session
 		newSession(p2pString, function(sessionid) { 
-			var tok = newToken(sessionid); 
+			var tok = newToken(sessionid, false); 
 			updateUser(deviceid, sessionid, tok, false, 0, res);
 		});
 	} else {
@@ -95,11 +92,11 @@ function authenticateUser(deviceid, p2p, force, res) {
 		common.mongo.collection('users', function(e, c) {	
 			c.findOne({'deviceid':deviceid}, function(err, doc) {
 				if (doc) { 
-						var tok = newToken(doc.sessionid);
+						var tok = newToken(doc.sessionid, false);
 						updateUser(deviceid, doc.sessionid, tok, false, doc.points, res);
 				} else {  // create new id
 					newSession(p2pString, function(sessionid) {
-						var tok = newToken(sessionid);
+						var tok = newToken(sessionid, false);
 						updateUser(deviceid, sessionid, tok, false, 0, res);
 					});
 				}
@@ -119,9 +116,12 @@ function newSession(p2p, cb) {
 }
 
 
-var newToken = function(sessionid) {
+function newToken(sessionid, isGod) {
+	var expire = isGod ? new Date().Time() + (1000*60*60*24) : new Date().Time() + (7*1000*60*60*24); // one day or one week
+
 	var token = common.opentok.generateToken({session_id:sessionid, 
 		role:common.OpenTok.RoleConstants.PUBLISHER, 
+		expire_time: expire, 
 		connection_data:"userId:42temp"}); //metadata to pass to other users connected to the session. (eg. names, user id, etc)
 	return token;			
 }
@@ -201,7 +201,7 @@ function getCurrentSessions(streaming, res) {
 }
 
 function enterSession(sessionid, res) {
-	var tok = newToken(sessionid);
+	var tok = newToken(sessionid, true);
 
   // return json with tok + sessionid
   res.writeHead(200, { 'Content-Type': 'application/json' });   
@@ -228,23 +228,7 @@ function setUserPoints(deviceid, points, res) {
 }
 
 function setGod(deviceid, res) {
-	removeGod();
-	common.mongo.collection('users', function(e, c) {
-		c.update({deviceid: deviceid},
-			{$set: {isGod: true, godStart: new Date().Time(), points: 0 }}, 
-			function(err) {
-        if (err) console.warn("MONGO ERROR "+err.message);
-        console.log('god is now '+deviceid);
-        
-        // return json with tok + sessionid
-        res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ deviceid:deviceid}));
-        res.end();
-    });
-	});	
-}
 
-function removeGod() {
 	common.mongo.collection('users', function(e, c) {
 		c.findAndModify({isGod: true}, {}, {$set: {isGod: false}}, {upsert: false},
 			function(err, object) {
@@ -253,10 +237,49 @@ function removeGod() {
         	console.log('removed god '+object.deviceid);
         	common.sendPush(object.airshiptoken, 'You are no longer god');
         } else console.log('no current god');
+        
+        c.update({deviceid: deviceid},
+					{$set: {isGod: true, godStart: new Date().getTime(), points: 0 }}, 
+					function(err) {
+		        if (err) console.warn("MONGO ERROR "+err.message);
+		        console.log('god is now '+deviceid);
+		        
+		        // return json with tok + sessionid
+		        res.writeHead(200, { 'Content-Type': 'application/json' });   
+		        res.write(JSON.stringify({ success:true, god:deviceid}));
+		        res.end();
+		    });
+		        
     });
 	});	
+
+
 }
 
+
+
+function howLongGod(res) {
+			// check if in db already
+		common.mongo.collection('users', function(e, c) {	
+			c.findOne({isGod:true}, function(err, doc) {
+				if (doc) { 
+					var timeElapsed = new Date().getTime() - doc.godStart;
+					var timeRemaining = Math.max(60*60*1000 - timeElapsed, 0);
+	        res.writeHead(200, { 'Content-Type': 'application/json' });   
+	        res.write(JSON.stringify({ time: timeRemaining}));
+	        res.end();
+				} else {  
+					console.log("no god found");
+	        // no god, time=0
+	        res.writeHead(200, { 'Content-Type': 'application/json' });   
+	        res.write(JSON.stringify({ time: 0}));
+	        res.end();
+				}
+        
+				
+			});
+		});
+}
 
 function clearDB(res) {
 	
