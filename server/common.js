@@ -28,8 +28,8 @@
 
 
 // Require the configuration file
-//var config = require(__dirname + "/config_prod.json");
-var config = require(__dirname + "/config.json");
+var config = require(__dirname + "/config_prod.json");
+//var config = require(__dirname + "/config.json");
 
 // Config opentok
 var OpenTok = require('opentok');

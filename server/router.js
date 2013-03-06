@@ -40,6 +40,10 @@ function route(url, res) {
   	var streaming = common.qs.parse(url)["streaming"];
 	  getCurrentSessions(streaming, res);
   }
+  else if (pathname === "/enter_random_session") {
+  	var streaming = common.qs.parse(url)["streaming"];
+	  enterRandomSession(streaming, res);
+  }
   else if (pathname === "/enter_session") {
 	  var sessionid = common.qs.parse(url)["sessionid"];
 	  enterSession(sessionid, res);
@@ -66,8 +70,8 @@ function route(url, res) {
   else if (pathname === "/summon_eyes") {
 	  common.broadcastPush("my eyes I summon you", res);
   }
-  else if (pathname === "/what_time_god") {
-  	whatTimeGod(res);
+  else if (pathname === "/god_status") {
+  	godStatus(res);
   }
   else if (pathname === "/message_god") {
   	var deviceid = common.qs.parse(url)["deviceid"];
@@ -225,12 +229,40 @@ function getCurrentSessions(streaming, res) {
   });
 }
 
+function enterRandomSession(streaming, res) {
+	var args = {};
+	if (streaming == 'true') args = {streaming:true};
+	else if (streaming == 'false') args = {streaming:false};
+
+	common.mongo.collection('users', function(e, c) {
+	
+		c.find(args).count(function(err, num) {
+			if (num > 0) {
+				var n = Math.floor(Math.random()*num);
+				c.find(args).limit(-1).skip(n).toArray(function(err, results) {
+					console.log(results[0].sessionid);
+		      enterSession(results[0].sessionid, res);
+				});
+			} else {
+		    res.header('Access-Control-Allow-Origin', '*' );
+		    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+		    res.header('Access-Control-Allow-Headers', 'Content-Type');
+        res.writeHead(200, { 'Content-Type': 'application/json' });   
+        res.write(JSON.stringify({status:"no sessions available"}));
+        res.end();
+			}
+		});
+		
+  });
+}
+
+
 function enterSession(sessionid, res) {
 	var tok = newToken(sessionid, true);
 
   // return json with tok + sessionid
   res.writeHead(200, { 'Content-Type': 'application/json' });   
-  res.write(JSON.stringify({ token:tok }));
+  res.write(JSON.stringify({ token:tok, sessionid:sessionid }));
   res.end();
 
 }
@@ -244,10 +276,7 @@ function setUserPoints(deviceid, points, res) {
         if (err) console.warn("MONGO ERROR "+err.message);
         else console.log('successfully updated user points '+points);
 
-        // return json with tok + sessionid
-        res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ deviceid:deviceid, points: parseInt(points, 10)}));
-        res.end();
+        godStatus(res);
     });
 	});	
 }
@@ -282,22 +311,22 @@ function setGod(deviceid, res) {
 
 }
 
-function whatTimeGod(res) {
+function godStatus(res) {
 		// check if in db already
 	common.mongo.collection('users', function(e, c) {	
 		c.findOne({isGod:true}, function(err, doc) {
+			var time;
 			if (doc) { 
-				var time = new Date() > doc.godExpire ? true : doc.godExpire.toISOString();
-        res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ time: time}));
-        res.end();
+				var godhoodAvailable = new Date() > doc.godExpire;
+				var timeGodhoodAvailable = doc.godExpire.toISOString();
 			} else {  
 				console.log("no god found");
-        // no god, time=0
-        res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ time: true}));
-        res.end();
+				time = true;
 			}
+		
+      res.writeHead(200, { 'Content-Type': 'application/json' });   
+      res.write(JSON.stringify({ godhoodAvailable: godhoodAvailable, timeGodhoodAvailable: timeGodhoodAvailable, godSummonable: false}));
+      res.end();
 		});
 	});
 }
