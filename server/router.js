@@ -82,7 +82,7 @@ function route(url, res) {
   // testing methods
   else if (pathname === "/test_send") {
   	var airshiptoken = common.qs.parse(url)["airshiptoken"];
-	  common.sendPush(airshiptoken, "test send", res);
+	  common.sendPush(airshiptoken, "test send", {"additional":"args"}, res);
   }
 }
 
@@ -289,7 +289,7 @@ function setGod(deviceid, res) {
         if (err) console.warn("MONGO ERROR "+err.message);
         if (object) {	
         	console.log('removed god '+object.deviceid);
-        	common.sendPush(object.airshiptoken, 'You are no longer god');
+        	common.sendPush(object.airshiptoken, 'You are no longer god', {});
         } else console.log('no current god');
         
         var godExpire = new Date(new Date().getTime() + 5*60*1000);
@@ -335,10 +335,17 @@ function messageGod(deviceid, msg, res) {
 	common.mongo.collection('users', function(e, c) {	
 		c.findOne({isGod:true}, function(err, doc) {
 			if (doc) { 
-				common.sendPush(doc.airshiptoken, msg, res);
-        res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ status: "message sent" }));
-        res.end();
+			 
+  			c.findOne({deviceid:deviceid}, function(err, ddoc) {
+    			var sessionid = "";
+    			if (ddoc) {
+      			sessionid = ddoc.sessionid;
+    			}
+  				common.sendPush(doc.airshiptoken, msg, {"sessionid":sessionid}, res);
+          res.writeHead(200, { 'Content-Type': 'application/json' });   
+          res.write(JSON.stringify({ status: "message sent" }));
+          res.end();
+        }
 			} else {  
 				console.log("no god found");
         // no god, time=0

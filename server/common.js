@@ -66,7 +66,7 @@ ua = new UA(config.ua.appkey, config.ua.appsecret, config.ua.appmastersecret);
 //app secret: A2jpyiKeS6aEbmRIoLzhKw
 
 // send to user
-var sendPush = function(airshiptoken, msg, res) {
+var sendPush = function(airshiptoken, msg, additional, res) {
 
 	var payload0 = {
     "device_tokens": [ airshiptoken ],
@@ -76,6 +76,9 @@ var sendPush = function(airshiptoken, msg, res) {
         "sound": "default"
     }
   };
+  
+  payload0 = payload0.concat(additional);
+  console.log(payload0);
 
   ua.pushNotification("/api/push", payload0, function(error) {
 	  if (error) console.log("ua error sending payload "+error);
