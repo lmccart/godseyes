@@ -28,8 +28,8 @@
 
 
 // Require the configuration file
-var config = require(__dirname + "/config_prod.json");
-//var config = require(__dirname + "/config.json");
+//var config = ('development' == app.get('env')) ? require(__dirname + "/config.json") : require(__dirname + "/config_prod.json") 
+var config = require(__dirname + "/config.json");
 
 // Config opentok
 var OpenTok = require('opentok');
@@ -39,6 +39,19 @@ var opentok = new OpenTok.OpenTokSDK(config.opentok.key, config.opentok.secret);
 var Db = require('mongodb').Db;
 var MongoServer = require('mongodb').Server;
 var mongo = new Db(config.mongo.db, new MongoServer(config.mongo.host, config.mongo.port, {strict:true, auto_reconnect:true}), {w: 1});
+
+
+  // open mongo connect
+mongo.open(function(err, p_client) {
+  if (err) { throw err; }
+  console.log('mongo open '+config.mongo.user+' '+config.mongo.pass);
+
+  mongo.authenticate(config.mongo.user, config.mongo.pass, function (err, replies) {
+    // You are now connected and authenticated.
+    console.log('mongo authenticated');
+  });
+});
+
 
 // Date helpers
 require('date-utils');

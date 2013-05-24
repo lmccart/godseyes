@@ -1,97 +1,113 @@
+
+/**
+ * Module dependencies.
+ */
+
+var express = require('express')
+  , routes = require('./routes')
+  , user = require('./routes/user')
+  , http = require('http')
+  , path = require('path');
+
+var app = express();
 var common = require('./common.js');
 
-function route(url, res) {
 
-  var pathname = common.url.parse(url).pathname;
-  console.log("About to route a request for " + pathname);
-  
-  if (pathname === "/authenticate_user") {
-  	var deviceid = common.qs.parse(url)["deviceid"];
-  	var version = common.qs.parse(url)["version"];
-  	var p2p = common.qs.parse(url)["p2p"];
-  	var force = common.qs.parse(url)["force"];
-  	
-  	//console.log("deviceid:"+deviceid+" p2p:"+p2p+" force:"+force);	
-  	authenticateUser(deviceid, version, p2p, force, res);
-  	
-  } 
-  else if (pathname === "/remove_user") {
-  	var deviceid = common.qs.parse(url)["deviceid"];
-  	removeUser(deviceid, res);
-  }
-  else if (pathname === "/set_airship_token") {
-  	var deviceid = common.qs.parse(url)["deviceid"];
-  	var airshiptoken = common.qs.parse(url)["airshiptoken"];
-  	setAirshipToken(deviceid, airshiptoken, res);
-  }
-  
-  else if (pathname === "/user_session_started") {
-  	var deviceid = common.qs.parse(url)["deviceid"];
-  	var desc = common.qs.parse(url)["desc"];
-  	var img = common.qs.parse(url)["img"];
-	  setUserStreaming(deviceid, true, desc, img, res);
-  } else if (pathname === "/user_session_ended") {
-  	var deviceid = common.qs.parse(url)["deviceid"];
-  	var points = common.qs.parse(url)["points"];
-	  setUserStreaming(deviceid, false, "", "", res);
-	  setUserPoints(deviceid, points, res);
-  }
-  
-  else if (pathname === "/get_current_sessions") {
-  	var streaming = common.qs.parse(url)["streaming"];
-	  getCurrentSessions(streaming, res);
-  }
-  else if (pathname === "/enter_random_session") {
-  	var streaming = common.qs.parse(url)["streaming"];
-	  enterRandomSession(streaming, res);
-  }
-  else if (pathname === "/enter_session") {
-	  var sessionid = common.qs.parse(url)["sessionid"];
-	  enterSession(sessionid, res);
-  }
-  
-  // DB management methods
-  else if (pathname === "/god_ping") {
-  	var deviceid = common.qs.parse(url)["deviceid"];
-  	getCurrentSessions('true', res, godPing, deviceid);
-  }
-  else if (pathname === "/ping") {
-  	var deviceid = common.qs.parse(url)["deviceid"];
-  	var points = common.qs.parse(url)["points"];
-	  setUserPoints(deviceid, points, res);
-  }
-  else if (pathname === "/clear_db") {
-  	clearDB(res);
-  }
-  else if (pathname === "/refresh_db") {
-  	refreshDB(res);
-  }
-  
-  // god logics
-  else if (pathname === "/set_god") {
-  	var deviceid = common.qs.parse(url)["deviceid"];
-  	setGod(deviceid, res);
-  }
-  else if (pathname === "/summon_eyes") {
-	  common.broadcastPush("my eyes I summon you", [["type",1]], res);
-  }
-  else if (pathname === "/god_status") {
-  	godStatus(res);
-  }
-  else if (pathname === "/message_god") {
-  	var deviceid = common.qs.parse(url)["deviceid"];
-  	var msg = common.qs.parse(url)["msg"];
-	  messageGod(deviceid, msg, res);
-  }
-  
-  // testing methods
-  else if (pathname === "/test_send") {
-  	var airshiptoken = common.qs.parse(url)["airshiptoken"];
-	  common.sendPush(airshiptoken, "test send", [["type",4], ["additional","args"]], res);
-  }
+// all environments
+app.set('port', process.env.PORT || 3000);
+app.set('views', __dirname + '/views');
+app.set('view engine', 'ejs');
+app.use(express.favicon());
+app.use(express.logger('dev'));
+app.use(express.bodyParser());
+app.use(express.methodOverride());
+app.use(app.router);
+app.use(express.static(path.join(__dirname, 'public')));
+
+// development only
+if ('development' == app.get('env')) {
+  app.use(express.errorHandler());
 }
 
-//common.otSessionId
+app.get('/', routes.index);
+app.get('/users', user.list);
+
+http.createServer(app).listen(app.get('port'), function(){
+  console.log('Express server listening on port ' + app.get('port'));
+});
+
+app.get('/authenticate_user', function(req, res){
+  authenticateUser(req.query.deviceid, req.query.version, req.query.p2p, req.query.force, res);
+});
+
+app.get('/get_current_sessions', function(req, res){
+  getCurrentSessions(req.query.streaming, res);
+});
+
+app.get('/remove_user', function(req, res) {
+	removeUser(req.query.deviceid, res);
+});
+
+app.get('/set_airship_token', function(req, res) {
+	setAirshipToken(req.query.deviceid, req.query.airshiptoken, res);
+});
+  
+app.get('/user_session_started', function(req, res) {
+  setUserStreaming(req.query.deviceid, true, res);
+});
+
+app.get('/user_session_ended', function(req, res) {
+  setUserStreaming(req.query.deviceid, false, res);
+  setUserPoints(req.query.deviceid, req.query.points, res);
+});
+
+app.get('/enter_random_session', function(req, res) {
+	enterRandomSession(req.query.streaming, res);
+});
+
+app.get('/enter_session', function(req, res) {
+	enterSession(req.query.sessionid, res);
+});
+  
+// DB management methods
+app.get('/god_ping', function(req, res) {
+	getCurrentSessions('true', res, godPing, req.query.deviceid);
+});
+
+app.get('/ping', function(req, res) {
+	  setUserPoints(req.query.deviceid, req.query.points, res);
+});
+
+app.get('/clear_db', function(req, res) {
+	clearDB(res);
+});
+
+app.get('/refresh_db', function(req, res) {
+	refreshDB(res);
+});
+
+// god logics
+
+app.get('/set_god', function(req, res) {
+  	setGod(req.query.deviceid, res);
+});
+
+app.get('/summon_eyes', function(req, res) {
+	common.broadcastPush("my eyes I summon you", [["type",1]], res);
+});
+
+app.get('/god_status', function(req, res) {
+	godStatus(res);
+});
+
+app.get('/message_god', function(req, res) {
+	  messageGod(req.query.deviceid, req.query.msg, res);
+});
+
+app.get('/test_send', function(req, res) {
+	common.sendPush(req.query.airshiptoken, "test send", [["type",4], ["additional","args"]], res);
+});
+
 
 function authenticateUser(deviceid, version, p2p, force, res) {
 	
@@ -133,11 +149,7 @@ function removeUser(deviceid, res) {
 		c.findAndModify({deviceid: deviceid}, {}, {}, {remove: true}, function(err, doc) {
 			console.log("removed "+deviceid);
 		});
-		
-    // return json with tok + sessionid
-    res.writeHead(200, { 'Content-Type': 'application/json' });   
-    res.write(JSON.stringify({ success:true, removed: deviceid}));
-    res.end();
+    res.json({ success:true, removed: deviceid});
 	});	
 }
 
@@ -174,9 +186,7 @@ function updateUser(deviceid, expired, sessionid, tok, stream, points, isGod, re
         else console.log('successfully updated');
         
         // return json with tok + sessionid
-        res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ deviceid:deviceid, expired:expired, token:tok, sessionid:sessionid, streaming: stream, points: points, isGod: isGod, pointSpeeds: common.pointSpeeds}));
-        res.end();
+        res.json(JSON.stringify({ deviceid:deviceid, expired:expired, token:tok, sessionid:sessionid, streaming: stream, points: points, isGod: isGod, pointSpeeds: common.pointSpeeds}));
     });
 	});
 }
@@ -194,53 +204,42 @@ function setAirshipToken(deviceid, airshiptoken, res) {
 	        if (err) console.warn("MONGO ERROR "+err.message);
 	        else console.log('successfully updated ua token '+airshiptoken.toUpperCase());
 		        
-	        // return json with tok + sessionid
-	        res.writeHead(200, { 'Content-Type': 'application/json' });   
-	        res.write(JSON.stringify({ deviceid:deviceid, airshiptoken:airshiptoken.toUpperCase()}));
-	        res.end();
+	        res.json({ deviceid:deviceid, airshiptoken:airshiptoken.toUpperCase()});
 	    });
 		});	
 	});
 }
 
-function setUserStreaming(deviceid, streaming, desc, img, res) {
+function setUserStreaming(deviceid, streaming, res) {
 	common.mongo.collection('users', function(e, c) {
 		// upsert user with tok + id
 		c.update({deviceid: deviceid},
-			{$set: {streaming: streaming, desc: desc, img: img, started: new Date().getTime() }}, 
+			{$set: {streaming: streaming, started: new Date().getTime() }}, 
 			function(err) {
         if (err) console.warn("MONGO ERROR "+err.message);
         else console.log('successfully updated user streaming '+streaming);
         
-        
-        // return json with tok + sessionid
-        res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ deviceid:deviceid, streaming: streaming, desc:desc, img:img}));
-        res.end();
+        res.json({ deviceid:deviceid, streaming: streaming });
     });
 	});	
 }
 
 // takes a callback, if none specified calls printResults
 function getCurrentSessions(streaming, res, func, args) {
-	var stream_args = {};
-	if (streaming == 'true') stream_args = {streaming:true};
-	else if (streaming == 'false') stream_args = {streaming:false};
+	var stream_args = { streaming:(streaming == 'true') };
 
 	common.mongo.collection('users', function(e, c) {
 		c.find(stream_args).toArray(function(err, results) {
 			console.log(results+" "+err);
 			if (func) func(results, res, args);
-			else printResults(results, res);
+			else {
+				//console.log(JSON.stringify(results)+" "+err);
+				res.json(results);
+			}
 		});
   });
 }
 
-function printResults(results, response) {
-    response.writeHead(200, { 'Content-Type': 'application/json' });   
-    response.write(JSON.stringify(results));
-    response.end();
-}
 
 function enterRandomSession(streaming, res) {
 	var args = {};
@@ -257,12 +256,7 @@ function enterRandomSession(streaming, res) {
 		      enterSession(results[0].sessionid, res);
 				});
 			} else {
-		    res.header('Access-Control-Allow-Origin', '*' );
-		    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-		    res.header('Access-Control-Allow-Headers', 'Content-Type');
-        res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({status:"no sessions available"}));
-        res.end();
+        res.json({status:"no sessions available"});
 			}
 		});
 		
@@ -273,10 +267,8 @@ function enterRandomSession(streaming, res) {
 function enterSession(sessionid, res) {
 	var tok = newToken(sessionid, true);
 
-  // return json with tok + sessionid
-  res.writeHead(200, { 'Content-Type': 'application/json' });   
-  res.write(JSON.stringify({ token:tok, sessionid:sessionid }));
-  res.end();
+  // return json with tok + sessionid  
+  res.json({ token:tok, sessionid:sessionid });
 
 }
 
@@ -312,15 +304,10 @@ function setGod(deviceid, res) {
 		        if (err) console.warn("MONGO ERROR "+err.message);
 		        console.log('god is now '+deviceid);
 		        
-		        // return json with tok + sessionid
-		        res.writeHead(200, { 'Content-Type': 'application/json' });   
-		        res.write(JSON.stringify({ success:true, god:deviceid, godExpire: godExpire}));
-		        res.end();
+		        res.json({ success:true, god:deviceid, godExpire: godExpire});
 		    });		        
 		  });
 	});	
-
-
 }
 
 function godPing(sessions, res, deviceid) {
@@ -332,11 +319,8 @@ function godPing(sessions, res, deviceid) {
 				isGod = doc.isGod;
 				console.log("doc = "+doc);
 			} else console.log('no doc found');
-					
-	    // return json with tok + sessionid
-	    res.writeHead(200, { 'Content-Type': 'application/json' });   
-	    res.write(JSON.stringify({ isGod:isGod, sessions:sessions}));
-	    res.end();
+					 
+	    res.json({ isGod:isGod, sessions:sessions });
 		});
 	});
 }
@@ -354,9 +338,7 @@ function godStatus(res) {
 				console.log("no god found");
 			}
 		
-      res.writeHead(200, { 'Content-Type': 'application/json' });   
-      res.write(JSON.stringify({ godhoodAvailable: godhoodAvailable, timeGodhoodAvailable: timeGodhoodAvailable, godSummonable: false, pointSpeeds: common.pointSpeeds }));
-      res.end();
+      res.json({ godhoodAvailable: godhoodAvailable, timeGodhoodAvailable: timeGodhoodAvailable, godSummonable: false, pointSpeeds: common.pointSpeeds });
 		});
 	});
 }
@@ -374,16 +356,11 @@ function messageGod(deviceid, msg, res) {
       			desc = ddoc.desc.substring(0, Math.min(ddoc.desc.length,75));
     			}
   				common.sendPush(doc.airshiptoken, msg, [["type",3], ["sessionid",sessionid], ["desc", desc]], res);
-          res.writeHead(200, { 'Content-Type': 'application/json' });   
-          res.write(JSON.stringify({ status: "message sent" }));
-          res.end();
+          res.json({ status: "message sent" });
         });
 			} else {  
-				console.log("no god found");
-        // no god, time=0
-        res.writeHead(200, { 'Content-Type': 'application/json' });   
-        res.write(JSON.stringify({ status: "no god found."}));
-        res.end();
+				console.log("no god found"); 
+        res.json({ status: "no god found."});
 			}
 		});
 	});
@@ -408,7 +385,6 @@ function refreshDB() {
 	});
 }
 
-exports.route = route;
 exports.refreshDB = refreshDB;
 
 

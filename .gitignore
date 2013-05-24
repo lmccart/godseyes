@@ -16,5 +16,9 @@ ios/profile
 ios/*.moved-aside
 ios/DerivedData
 ios/.idea/
-/server/config.json
-server/node_modules/*
+
+# Server
+*config.json
+*config_prod.json
+*node_modules/*
+godseyes/node_modules/*

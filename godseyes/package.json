@@ -1,17 +1,14 @@
 {
   "name": "godseyes",
+  "version": "0.0.1",
+  "private": true,
   "scripts": {
-    "start": "index.js"
-  },
-  "version": "0.0.0-98",
-  "engines": {
-    "node": "0.8.x"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/lmccart/godseyes.git"
+    "start": "node app.js"
   },
   "dependencies": {
+    "express": "3.2.5",
+    "ejs": "*",
+    "ejs-locals": "*",
     "mongodb": "1.2.13",
     "opentok": "0.3.1",
     "urban-airship": "0.2.4",
@@ -19,3 +16,4 @@
   },
   "subdomain": "godseyes"
 }
+
