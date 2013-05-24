@@ -147,6 +147,7 @@ function removeUser(deviceid, res) {
 	common.mongo.collection('users', function(e, c) {	
 		
 		c.findAndModify({deviceid: deviceid}, {}, {}, {remove: true}, function(err, doc) {
+			if (err) console.log(err);
 			console.log("removed "+deviceid);
 		});
     res.json({ success:true, removed: deviceid});
@@ -186,7 +187,7 @@ function updateUser(deviceid, expired, sessionid, tok, stream, points, isGod, re
         else console.log('successfully updated');
         
         // return json with tok + sessionid
-        res.json(JSON.stringify({ deviceid:deviceid, expired:expired, token:tok, sessionid:sessionid, streaming: stream, points: points, isGod: isGod, pointSpeeds: common.pointSpeeds}));
+        res.json({ deviceid:deviceid, expired:expired, token:tok, sessionid:sessionid, streaming: stream, points: points, isGod: isGod, pointSpeeds: common.pointSpeeds});
     });
 	});
 }

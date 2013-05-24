@@ -20,5 +20,5 @@ ios/.idea/
 # Server
 *config.json
 *config_prod.json
-*node_modules/*
+server/node_modules/*
 godseyes/node_modules/*
