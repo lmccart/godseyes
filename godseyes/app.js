@@ -227,7 +227,10 @@ function setUserStreaming(deviceid, streaming, res) {
 
 // takes a callback, if none specified calls printResults
 function getCurrentSessions(streaming, res, func, args) {
-	var stream_args = { streaming:(streaming == 'true') };
+	
+	var stream_args = {};
+	if (streaming == 'true') stream_args = { streaming:true };
+	else if (streaming == 'false') stream_args = { streaming:false };
 
 	common.mongo.collection('users', function(e, c) {
 		c.find(stream_args).toArray(function(err, results) {
