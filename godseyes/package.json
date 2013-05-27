@@ -1,6 +1,6 @@
 {
   "name": "godseyes",
-  "version": "0.0.1",
+  "version": "0.0.1-2",
   "private": true,
   "scripts": {
     "start": "node app.js"
@@ -14,6 +14,8 @@
     "urban-airship": "0.2.4",
     "date-utils": "1.2.12"
   },
-  "subdomain": "godseyes"
+  "subdomain": "godseyes",
+  "engines": {
+    "node": "0.8.x"
+  }
 }
-
