@@ -76,6 +76,7 @@ app.get('/god_ping', function(req, res) {
 
 app.get('/ping', function(req, res) {
 	  setUserPoints(req.query.deviceid, req.query.points, res);
+	  setUserImg(req.query.deviceid, req.query.img);
 });
 
 app.get('/clear_db', function(req, res) {
@@ -286,6 +287,17 @@ function setUserPoints(deviceid, points, res) {
         else console.log('successfully updated user points '+points);
 
         godStatus(res);
+    });
+	});	
+}
+
+function setUserImg(deviceid, img) {
+	common.mongo.collection('users', function(e, c) {
+		c.update({deviceid: deviceid},
+			{$set: {img: img }}, 
+			function(err) {
+        if (err) console.warn("MONGO ERROR "+err.message);
+        else console.log('successfully updated user img '+img);
     });
 	});	
 }
