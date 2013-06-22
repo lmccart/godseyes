@@ -76,7 +76,8 @@ app.get('/god_ping', function(req, res) {
 
 app.get('/ping', function(req, res) {
 	  setUserPoints(req.query.deviceid, req.query.points, res);
-	  setUserImg(req.query.deviceid, req.query.img);
+	  if (req.query.img)
+		  setUserImg(req.query.deviceid, req.query.img);
 });
 
 app.get('/clear_db', function(req, res) {
