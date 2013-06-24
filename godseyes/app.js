@@ -128,16 +128,22 @@ app.get('/set_cur_version', function(req, res) {
 	if (req.query.curVersion) {
 		common.curVersion = parseFloat(req.query.curVersion);
 		res.json({ success: true, curVersion: common.curVersion });
-	} else res.json({ success: false });
+	} else res.json({ success: false, curVersion: common.curVersion });
 });
 
 app.get('/set_point_speeds', function(req, res) {
 	if (req.query.speed0 && req.query.speed1) {
 		common.pointSpeeds = [parseInt(req.query.speed0, 10), parseInt(req.query.speed1, 10)];
 		res.json({ success: true, pointSpeeds: common.pointSpeeds });
-	} else res.json({ success: false });
+	} else res.json({ success: false, pointSpeeds: common.pointSpeeds });
 });
 
+app.get('/set_thumbnail_frequency', function(req, res) {
+	if (req.query.thumbnailFrequency) {
+		common.thumbnailFrequency = parseFloat(req.query.thumbnailFrequency);
+		res.json({ success: true, thumbnailFrequency: common.thumbnailFrequency });
+	} else res.json({ success: false, thumbnailFrequency: common.thumbnailFrequency });
+});
 
 
 function authenticateUser(deviceid, version, p2p, force, res) {
@@ -311,7 +317,7 @@ function enterSession(sessionid, res) {
 function setUserPoints(deviceid, points, res) {
 	common.mongo.collection('users', function(e, c) {
 		c.update({deviceid: deviceid},
-			{$set: {points: parseInt(points, 10), streaming: true, updated: new Date().getTime() }}, 
+			{$set: {points: parseInt(points, 10), streaming: true, updated: new Date().getTime(), thumbnailFrequency: common.thumbnailFrequency}}, 
 			function(err) {
         if (err) console.warn("MONGO ERROR "+err.message);
         else console.log('successfully updated user points '+points);

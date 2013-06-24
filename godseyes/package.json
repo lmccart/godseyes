@@ -1,6 +1,6 @@
 {
   "name": "godseyes",
-  "version": "0.0.1-12",
+  "version": "0.0.1-22",
   "private": true,
   "scripts": {
     "start": "node app.js"
