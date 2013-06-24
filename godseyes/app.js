@@ -41,7 +41,9 @@ app.get('/authenticate_user', function(req, res){
 });
 
 app.get('/get_current_sessions', function(req, res){
-  getCurrentSessions(req.query.streaming, res);
+	if (req.query.stream_true == "on")
+  	getCurrentSessions("true", res);
+  else getCurrentSessions(req.query.streaming, res);
 });
 
 app.get('/remove_user', function(req, res) {
