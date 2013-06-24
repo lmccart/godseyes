@@ -317,7 +317,7 @@ function enterSession(sessionid, res) {
 function setUserPoints(deviceid, points, res) {
 	common.mongo.collection('users', function(e, c) {
 		c.update({deviceid: deviceid},
-			{$set: {points: parseInt(points, 10), streaming: true, updated: new Date().getTime(), thumbnailFrequency: common.thumbnailFrequency}}, 
+			{$set: {points: parseInt(points, 10), streaming: true, updated: new Date().getTime()}}, 
 			function(err) {
         if (err) console.warn("MONGO ERROR "+err.message);
         else console.log('successfully updated user points '+points);
@@ -391,7 +391,7 @@ function godStatus(res) {
 				console.log("no god found");
 			}
 		
-      res.json({ godhoodAvailable: godhoodAvailable, timeGodhoodAvailable: timeGodhoodAvailable, godSummonable: false, pointSpeeds: common.pointSpeeds });
+      res.json({ godhoodAvailable: godhoodAvailable, timeGodhoodAvailable: timeGodhoodAvailable, godSummonable: false, pointSpeeds: common.pointSpeeds, thumbnailFrequency: common.thumbnailFrequency });
 		});
 	});
 }
