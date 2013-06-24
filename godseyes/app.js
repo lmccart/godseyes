@@ -95,7 +95,7 @@ app.get('/set_god', function(req, res) {
 });
 
 app.get('/summon_eyes', function(req, res) {
-	if (new Date().getTime() - common.lastEyesSummon) > 10*1000) {
+	if (new Date().getTime() - common.lastEyesSummon > common.summonFrequency) {
 		common.broadcastPush("my eyes I summon you", [["type",1]], res);
 		common.lastEyesSummon = new Date().getTime();
 	}
@@ -113,13 +113,36 @@ app.get('/test_send', function(req, res) {
 	common.sendPush(req.query.airshiptoken, "test send", [["type",4], ["additional","args"]], res);
 });
 
+/// SET METHODS FOR VARS
+app.get('/set_summon_frequency', function(req, res) {
+	if (req.query.summonFrequency) {
+		common.summonFrequency = parseInt(req.query.summonFrequency, 10);
+		res.json({ success: true, summonFrequency: common.summonFrequency });
+	} else res.json({ success: false });
+});
+
+app.get('/set_cur_version', function(req, res) {
+	if (req.query.curVersion) {
+		common.curVersion = parseFloat(req.query.curVersion);
+		res.json({ success: true, curVersion: common.curVersion });
+	} else res.json({ success: false });
+});
+
+app.get('/set_point_speeds', function(req, res) {
+	if (req.query.speed0 && req.query.speed1) {
+		common.pointSpeeds = [parseInt(req.query.speed0, 10), parseInt(req.query.speed1, 10)];
+		res.json({ success: true, pointSpeeds: common.pointSpeeds });
+	} else res.json({ success: false });
+});
+
+
 
 function authenticateUser(deviceid, version, p2p, force, res) {
 	
 	var p2pString = p2p ? 'enabled' : 'disabled';
 	var tok = "";
 	
-	var versionExpired = (version < common.currVersion);
+	var versionExpired = (version < common.curVersion);
 				
 	// if force flag, reset session automatically
 	// note: forcing streaming to false

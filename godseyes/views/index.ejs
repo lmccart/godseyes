@@ -6,7 +6,27 @@
   </head>
   <body>
     <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
+    
+    <h2>server vars</h2>
+
+    <form action="/set_cur_version">
+			current software version <input type="text" name="curVersion"><br>
+			<input type="submit" value="set software version">
+		</form>
+
+    <form action="/set_point_speeds">
+			base speed <input type="text" name="speed0"><br>
+			god watching speed <input type="text" name="speed1"><br>
+			<input type="submit" value="set point speeds">
+		</form>
+
+    <form action="/set_summon_frequency">
+			summon frequency <input type="text" name="summonFrequency"><br>
+			<input type="submit" value="set summon frequency">
+		</form>
+
+
+    <h2>app calls</h2>
 
 		<form action="/get_current_sessions">
 			<input type="submit" value="get current sessions">

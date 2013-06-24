@@ -149,9 +149,10 @@ module.exports = {
 	sendPush : sendPush,
 	broadcastPush : broadcastPush,
 	ua : ua,
-	currVersion : 0, // update software version here
+	curVersion : 0, // update software version here
 	pointSpeeds : [100, 1000], // rate god points increase normally and when god is watching
-	lastEyesSummon: 0
+	lastEyesSummon: 0,
+	summonFrequency: 10*1000
  	
 };
 
