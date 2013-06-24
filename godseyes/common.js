@@ -57,21 +57,6 @@ mongo.open(function(err, p_client) {
 // Date helpers
 require('date-utils');
 
-/*// Socket stuff
-var io = require('socket.io').listen(80);
-var socket;
-
-io.sockets.on('connection', function (socket) {
-  console.log("opened socket");
-  socket = socket;
-});
-
-var sendToSocket = function(msg) {
-	if (socket) {
-		 socket.emit('msg', msg);
-	}
-};*/
-
 // Push notifications
 var UA = require('urban-airship');
 ua = new UA(config.ua.appkey, config.ua.appsecret, config.ua.appmastersecret);
@@ -165,7 +150,8 @@ module.exports = {
 	broadcastPush : broadcastPush,
 	ua : ua,
 	currVersion : 0, // update software version here
-	pointSpeeds : [100, 1000] // rate god points increase normally and when god is watching
+	pointSpeeds : [100, 1000], // rate god points increase normally and when god is watching
+	lastEyesSummon: 0
  	
 };
 

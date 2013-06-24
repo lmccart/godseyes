@@ -95,7 +95,10 @@ app.get('/set_god', function(req, res) {
 });
 
 app.get('/summon_eyes', function(req, res) {
-	common.broadcastPush("my eyes I summon you", [["type",1]], res);
+	if (new Date().getTime() - common.lastEyesSummon) > 10*1000) {
+		common.broadcastPush("my eyes I summon you", [["type",1]], res);
+		common.lastEyesSummon = new Date().getTime();
+	}
 });
 
 app.get('/god_status', function(req, res) {
@@ -320,6 +323,7 @@ function setGod(deviceid, res) {
 					function(err) {
 		        if (err) console.warn("MONGO ERROR "+err.message);
 		        console.log('god is now '+deviceid);
+		        common.lastEyesSummon = 0; // reset last summons time
 		        
 		        res.json({ success:true, god:deviceid, godExpire: godExpire});
 		    });		        
