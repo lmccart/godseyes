@@ -438,7 +438,6 @@ function refreshDB() {
 	});
 }
 
-exports.refreshDB = refreshDB;
-
+setInterval(refreshDB, 5*1000);
 
 
